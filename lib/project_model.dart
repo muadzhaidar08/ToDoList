@@ -3,12 +3,14 @@ class Project {
   final String deskripsi;
   final String linkProject;
   final String namaIcon;
+  final String? imagePath;
 
   Project({
     required this.judul,
     required this.deskripsi,
     required this.linkProject,
     required this.namaIcon,
+    this.imagePath
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Project {
       deskripsi: json['description'] ?? 'tanpa deskripsi',
       linkProject: json['project_url'] ?? 'github.com',
       namaIcon: json['icon_name'] ?? 'default',
+      imagePath: json['image']
     );
   }
 }
