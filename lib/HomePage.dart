@@ -6,6 +6,9 @@ import 'project_model.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'sertifikat_model.dart';
+import 'skill_model.dart';
+import 'dart:ui';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -17,16 +20,25 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   final firestore = FirebaseFirestore.instance;
   late final Future<List<Project>> _projectsFuture;
+  late final Future<List<Certificate>> _certificatesFuture;
+  late final Future<List<Skill>> _skillsFuture;
 
   final GlobalKey _heroKey = GlobalKey();
+  final GlobalKey _aboutKey = GlobalKey();
   final GlobalKey _projectsKey = GlobalKey();
+  final GlobalKey _skillsKey = GlobalKey();
+  final GlobalKey _certificatesKey = GlobalKey();
   final GlobalKey _contactKey = GlobalKey();
   final GlobalKey _educationKey = GlobalKey();
+
+  bool _isProfileHovered = false;
 
   @override
   void initState() {
     super.initState();
     _projectsFuture = _fetchProjects();
+    _certificatesFuture = _fetchCertificates();
+    _skillsFuture = _fetchSkills();
   }
 
   Future<List<Project>> _fetchProjects() async {
@@ -38,6 +50,33 @@ class _HomepageState extends State<Homepage> {
       return projects;
     } catch (e) {
       print('Error fetching projects from Firestore: $e');
+      return [];
+    }
+  }
+
+  Future<List<Certificate>> _fetchCertificates() async {
+    try {
+      final snapshot = await firestore.collection('certificates').get();
+      final certificates = snapshot.docs.map((doc) {
+        return Certificate.fromJson(doc.data());
+      }).toList();
+      return certificates;
+    } catch (e) {
+      print('Error fetching certificates from Firestore');
+      return [];
+    }
+  }
+
+  Future<List<Skill>> _fetchSkills() async {
+    try {
+      final snapshot = await firestore.collection('skills').get();
+      final skills = snapshot.docs.map((doc) {
+        return Skill.fromJson(doc.data());
+      }).toList();
+      return skills;
+    } catch (e) {
+      print('Error fetching skills from Firestore');
+      ;
       return [];
     }
   }
@@ -59,14 +98,18 @@ class _HomepageState extends State<Homepage> {
 
   IconData _getIconData(String iconName) {
     switch (iconName.toLowerCase()) {
-      case 'rocket':
-        return Icons.rocket_launch;
-      case 'palette':
-        return Icons.color_lens;
-      case 'music':
-        return Icons.music_note;
-      case 'list':
-        return FontAwesomeIcons.listCheck;
+      case 'flutter':
+        return FontAwesomeIcons.flutter;
+      case 'dart':
+        return FontAwesomeIcons.dartLang;
+      case 'firebase':
+        return FontAwesomeIcons.fire;
+      case 'github':
+        return FontAwesomeIcons.github;
+      case 'figma':
+        return FontAwesomeIcons.figma;
+      case 'supabase':
+        return FontAwesomeIcons.database;
       default:
         return Icons.star;
     }
@@ -83,9 +126,15 @@ class _HomepageState extends State<Homepage> {
             child: Column(
               children: [
                 SizedBox(key: _heroKey, child: buildHeroSection(context)),
+                SizedBox(key: _aboutKey, child: buildAboutMeSection(context)),
                 SizedBox(
                   key: _projectsKey,
                   child: buildProjectSection(context),
+                ),
+                SizedBox(key: _skillsKey, child: buildSkillsSection(context)),
+                SizedBox(
+                  key: _certificatesKey,
+                  child: buildCertificatesSection(context),
                 ),
                 SizedBox(
                   key: _educationKey,
@@ -118,7 +167,13 @@ class _HomepageState extends State<Homepage> {
             child: Row(
               children: [
                 _navButton("Home", () => _scrollToSection(_heroKey)),
+                _navButton('About', () => _scrollToSection(_aboutKey)),
                 _navButton("Projects", () => _scrollToSection(_projectsKey)),
+                _navButton('Skills', () => _scrollToSection(_skillsKey)),
+                _navButton(
+                  'Certificates',
+                  () => _scrollToSection(_certificatesKey),
+                ),
                 _navButton("Education", () => _scrollToSection(_educationKey)),
                 _navButton("Contact", () => _scrollToSection(_contactKey)),
               ],
@@ -162,7 +217,9 @@ class _HomepageState extends State<Homepage> {
             ),
             SizedBox(height: 8),
             DefaultTextStyle(
-              style: Theme.of(context).textTheme.displaySmall!,
+              style: isDesktop
+                ? Theme.of(context).textTheme.displaySmall!
+                : Theme.of(context).textTheme.headlineMedium!,
               textAlign: isDesktop ? TextAlign.left : TextAlign.center,
               child: AnimatedTextKit(
                 animatedTexts: [
@@ -194,6 +251,35 @@ class _HomepageState extends State<Homepage> {
         final heroImage = Stack(
           alignment: Alignment.center,
           children: [
+            AnimatedContainer(
+              duration: Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+              width: 380,
+              height: 380,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: _isProfileHovered
+                      ? [Colors.purple, Colors.blue, Colors.green, Colors.red]
+                      : [Colors.blue, Colors.green, Colors.red, Colors.purple],
+                  begin: _isProfileHovered
+                      ? Alignment.topLeft
+                      : Alignment.bottomRight,
+                  end: _isProfileHovered
+                      ? Alignment.bottomRight
+                      : Alignment.topLeft,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _isProfileHovered
+                        ? Colors.purple.withOpacity(0.5)
+                        : Colors.blue.withOpacity(0.5),
+                    blurRadius: _isProfileHovered ? 40 : 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+            ),
             Container(
               width: 380,
               height: 380,
@@ -202,21 +288,34 @@ class _HomepageState extends State<Homepage> {
                 color: Theme.of(context).primaryColor.withOpacity(0.1),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.only(top: isDesktop ? 0 : 32),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  'asset/gw.JPG',
-                  width: 350,
-                  height: 350,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 350,
-                    width: 350,
-                    color: Colors.grey.shade200,
-                    child: Center(
-                      child: Icon(Icons.broken_image, color: Colors.grey),
+            MouseRegion(
+              onEnter: (_) => setState(() => _isProfileHovered = true),
+              onExit: (_) => setState(() => _isProfileHovered = false),
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                transform: Matrix4.translationValues(
+                  _isProfileHovered ? -15 : 0,
+                  _isProfileHovered ? -20 : 0,
+                  0,
+                )..rotateZ(_isProfileHovered ? 0.03 : 0),
+                child: Padding(
+                  padding: EdgeInsets.only(top: isDesktop ? 0 : 32),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'asset/gw.JPG',
+                      width: 350,
+                      height: 350,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 350,
+                        width: 350,
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -259,11 +358,54 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  Widget buildAboutMeSection(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 80),
+      width: double.infinity,
+      color: Colors.white,
+      child: Column(
+        children: [
+          Text("Tentang Saya", style: Theme.of(context).textTheme.displaySmall),
+          SizedBox(height: 16),
+          Text(
+            "Beberapa hal tentang gw",
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          SizedBox(height: 48),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  "Halo! Nama gw Ahmad Muadz Haidar, Gw adalah seorang Junior Flutter Developer, Gw membangun aplikasi iOS dan Android menggunakan Flutter dan Dart.",
+                  textAlign: TextAlign.justify,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                SizedBox(height: 20),
+                Text(
+                  "Di luar coding, saya sangat suka investasi tubuh untuk membangun pribadi yang kuat dan lebih berprinsip. Mari terhubung",
+                  textAlign: TextAlign.justify,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                SizedBox(height: 32),
+                OutlinedButton(
+                  onPressed: () => _scrollToSection(_contactKey),
+                  child: Text("Hubungi Saya"),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildProjectSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 80),
       width: double.infinity,
-      color: Colors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           Text(
@@ -311,11 +453,108 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  Widget buildSkillsSection(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 80),
+      width: double.infinity,
+      color: Colors.white,
+      child: Column(
+        children: [
+          Text(
+            "Keahlian Saya",
+            style: Theme.of(context).textTheme.displaySmall,
+          ),
+          SizedBox(height: 16),
+          Text(
+            "Teknologi dan tools yang gw kuasai",
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          SizedBox(height: 48),
+          FutureBuilder(
+            future: _skillsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Text("Gagal memuat skill");
+              }
+              final skills = snapshot.data;
+              if (skills == null || skills.isEmpty) {
+                return Text("belum ada skill untuk ditampilkan");
+              }
+              return Wrap(
+                spacing: 24,
+                runSpacing: 24,
+                alignment: WrapAlignment.center,
+                children: skills
+                    .map(
+                      (skill) => SkillCard(
+                        name: skill.name,
+                        iconData: _getIconData(skill.iconName),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildCertificatesSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 80),
+      width: double.infinity,
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Column(
+        children: [
+          Text("Sertifikasi", style: Theme.of(context).textTheme.displaySmall),
+          const SizedBox(height: 16),
+          Text(
+            "Beberapa sertifikasi yang telah saya peroleh.",
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 48),
+          FutureBuilder<List<Certificate>>(
+            future: _certificatesFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              }
+              if (snapshot.hasError) {
+                return Text("Gagal memuat sertifikat: ${snapshot.error}");
+              }
+              final certificates = snapshot.data;
+              if (certificates == null || certificates.isEmpty) {
+                return const Text("Belum ada sertifikat untuk ditampilkan.");
+              }
+              return Wrap(
+                spacing: 24,
+                runSpacing: 24,
+                alignment: WrapAlignment.center,
+                children: certificates
+                    .map(
+                      (cert) => CertificateCard(
+                        title: cert.title,
+                        issuer: cert.issuer,
+                        date: cert.date,
+                        imageUrl: cert.imageUrl,
+                        credentialUrl: cert.credentialUrl,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildEducationSection(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 80),
       width: double.infinity,
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: Colors.white,
       child: Column(
         children: [
           Text(
@@ -485,6 +724,20 @@ class ProjectCard extends StatefulWidget {
 class _ProjectCardState extends State<ProjectCard> {
   bool isHovered = false;
 
+  Widget _buildPlaceHolder() {
+    return Container(
+      height: 180,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      child: Center(
+        child: Icon(Icons.code, size: 40, color: Colors.grey.shade400),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -527,33 +780,13 @@ class _ProjectCardState extends State<ProjectCard> {
                     height: 180,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 180,
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    ),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildPlaceHolder(),
                   ),
                 )
               else
-                Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(12),
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.code,
-                      size: 40,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                ),
+                _buildPlaceHolder(),
+
               Padding(
                 padding: EdgeInsets.all(24),
                 child: Column(
@@ -564,11 +797,14 @@ class _ProjectCardState extends State<ProjectCard> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     SizedBox(height: 8),
-                    Text(
-                      widget.description,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                    SizedBox(
+                      height: 50,
+                      child: Text(
+                        widget.description,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     SizedBox(height: 20),
                     Row(
@@ -588,6 +824,195 @@ class _ProjectCardState extends State<ProjectCard> {
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SkillCard extends StatelessWidget {
+  final String name;
+  final IconData iconData;
+
+  const SkillCard({Key? key, required this.name, required this.iconData})
+    : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      height: 120,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FaIcon(iconData, size: 40, color: Theme.of(context).primaryColor),
+          const SizedBox(height: 12),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CertificateCard extends StatefulWidget {
+  final String title;
+  final String issuer;
+  final String date;
+  final String? imageUrl;
+  final String? credentialUrl;
+
+  const CertificateCard({
+    Key? key,
+    required this.title,
+    required this.issuer,
+    required this.date,
+    this.imageUrl,
+    this.credentialUrl,
+  }) : super(key: key);
+
+  @override
+  State<CertificateCard> createState() => _CertificateCardState();
+}
+
+class _CertificateCardState extends State<CertificateCard> {
+  bool isHovered = false;
+
+  void _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      throw 'Could not launch $url';
+    }
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      color: Colors.grey.shade100,
+      child: const Center(
+        child: Icon(Icons.description, size: 50, color: Colors.grey),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: InkWell(
+        onTap: widget.credentialUrl != null && widget.credentialUrl!.isNotEmpty
+            ? () => _launchURL(widget.credentialUrl!)
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 350,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+            boxShadow: [
+              isHovered
+                  ? BoxShadow(
+                      color: Theme.of(context).primaryColor.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    )
+                  : BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: Image.asset(
+                    widget.imageUrl!,
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildPlaceholderImage(),
+                  ),
+                )
+              else
+                _buildPlaceholderImage(),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.issuer,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      widget.date,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                    ),
+                    if (widget.credentialUrl != null &&
+                        widget.credentialUrl!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              "Lihat Kredensial",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.open_in_new,
+                              size: 18,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),

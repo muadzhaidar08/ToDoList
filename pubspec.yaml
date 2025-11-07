@@ -70,6 +70,18 @@ flutter:
     - asset/profil.JPG
     - asset/gw.JPG
     - asset/images/ToDoList.png
+    - asset/images/appchat.jpg
+    - asset/images/ytclone.png
+    - asset/images/git.png
+    - asset/images/figma.jpg
+    - asset/images/design.png
+    - asset/images/piton.png
+    - asset/images/ossn.jpg
+    - asset/images/inggris.png
+    - asset/images/tahfidz.PNG
+    
+    
+    
     
 
   # An image asset can refer to one or more resolution-specific "variants", see
