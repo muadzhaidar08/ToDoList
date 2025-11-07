@@ -9,7 +9,9 @@ Future<void> main() async {
   const authDomain = String.fromEnvironment('FLUTTER_PUBLIC_AUTH_DOMAIN');
   const projectId = String.fromEnvironment('FLUTTER_PUBLIC_PROJECT_ID');
   const storageBucket = String.fromEnvironment('FLUTTER_PUBLIC_STORAGE_BUCKET');
-  const messagingSenderId = String.fromEnvironment('FLUTTER_PUBLIC_MESSAGING_SENDER_ID');
+  const messagingSenderId = String.fromEnvironment(
+    'FLUTTER_PUBLIC_MESSAGING_SENDER_ID',
+  );
   const appId = String.fromEnvironment('FLUTTER_PUBLIC_APP_ID');
   const measurementId = String.fromEnvironment('FLUTTER_PUBLIC_MEASUREMENT_ID');
 
