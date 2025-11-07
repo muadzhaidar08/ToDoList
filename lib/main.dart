@@ -5,16 +5,23 @@ import 'package:portofolio_website/HomePage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  const apiKey = String.fromEnvironment('FLUTTER_PUBLIC_API_KEY');
+  const authDomain = String.fromEnvironment('FLUTTER_PUBLIC_AUTH_DOMAIN');
+  const projectId = String.fromEnvironment('FLUTTER_PUBLIC_PROJECT_ID');
+  const storageBucket = String.fromEnvironment('FLUTTER_PUBLIC_STORAGE_BUCKET');
+  const messagingSenderId = String.fromEnvironment('FLUTTER_PUBLIC_MESSAGING_SENDER_ID');
+  const appId = String.fromEnvironment('FLUTTER_PUBLIC_APP_ID');
+  const measurementId = String.fromEnvironment('FLUTTER_PUBLIC_MEASUREMENT_ID');
 
   await Firebase.initializeApp(
     options: const FirebaseOptions(
-      apiKey: "AIzaSyCjadqlKlVADiDD-Q-ZGmpuoEdnAsN5V54",
-      authDomain: "portofolio-web-muadz.firebaseapp.com",
-      projectId: "portofolio-web-muadz",
-      storageBucket: "portofolio-web-muadz.firebasestorage.app",
-      messagingSenderId: "414260759081",
-      appId: "1:414260759081:web:073c55022f7abf3d5daa38",
-      measurementId: "G-FGM8JY76CT",
+      apiKey: apiKey,
+      authDomain: authDomain,
+      projectId: projectId,
+      storageBucket: storageBucket,
+      messagingSenderId: messagingSenderId,
+      appId: appId,
+      measurementId: measurementId,
     ),
   );
 
